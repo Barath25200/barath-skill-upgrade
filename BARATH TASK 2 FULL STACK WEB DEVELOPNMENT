@@ -1,0 +1,90 @@
+ const express = require('express');
+const app = express();
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+
+// Connect to MongoDB
+mongoose.connect('mongodb://localhost/mydatabase', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+
+// Define the Post model
+const Post = require('./model');
+
+// Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// JWT Secret Key
+const SECRET_KEY = 'mysecretkey';
+
+// JWT Authentication Middleware
+const authenticate = (req, res, next) => {
+  const token = req.header('x-auth-token');
+  if (!token) return res.status(401).json({ msg: 'No token provided' });
+  jwt.verify(token, SECRET_KEY, (err, decoded) => {
+    if (err) return res.status(401).json({ msg: 'Invalid token' });
+    req.user = decoded;
+    next();
+  });
+};
+
+// Routes
+app.post('/login', (req, res) => {
+  const user = { id: 1, name: 'John Doe' }; // Replace with actual user data
+  const token = jwt.sign(user, SECRET_KEY);
+  res.json({ token });
+});
+
+app.post('/posts', authenticate, (req, res) => {
+  const post = new Post(req.body);
+  post.save((err, post) => {
+    if (err) return res.status(500).json({ msg: 'Error creating post' });
+    res.json(post);
+  });
+});
+
+app.get('/posts', authenticate, (req, res) => {
+  Post.find()
+    .then(posts => res.json(posts))
+    .catch(err => res.status(500).json({ msg: 'Error fetching posts' }));
+});
+
+app.get('/posts/:id', authenticate, (req, res) => {
+  Post.findById((link unavailable))
+    .then(post => res.json(post))
+    .catch(err => res.status(404).json({ msg: 'Post not found' }));
+});
+
+app.put('/posts/:id', authenticate, (req, res) => {
+  Post.findByIdAndUpdate((link unavailable), req.body, { new: true }, (err, post) => {
+    if (err) return res.status(500).json({ msg: 'Error updating post' });
+    res.json(post);
+  });
+});
+
+app.delete('/posts/:id', authenticate, (req, res) => {
+  Post.findByIdAndRemove((link unavailable), (err, post) => {
+    if (err) return res.status(404).json({ msg: 'Post not found' });
+    res.json({ msg: 'Post deleted successfully' });
+  });
+});
+
+app.listen(3000, () => {
+  console.log('Server started on port 3000');
+});
+```
+
+```
+// model.js
+const mongoose = require('mongoose');
+
+const postSchema = new mongoose.Schema({
+  title: String,
+  content: String
+});
+
+const Post = mongoose.model('Post', postSchema);
+
+module.export
